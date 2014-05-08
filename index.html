@@ -1,0 +1,170 @@
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+		<title>Box2dWeb</title>
+		<link href="css/style.css" rel="stylesheet" type="text/css">
+
+		
+		<!-- библиотеки -->
+		<script type="text/javascript" src="lib/Box2dWeb-2.1.a.3.min.js"></script>
+		<script type="text/javascript" src="lib/jquery-2.0.3.js"></script>
+		
+		<!-- сам javascript-код -->
+        <script type="text/javascript" src="js/globals.js"></script>
+        <script type="text/javascript" src="js/tools.js"></script>
+        <script type="text/javascript" src="js/keys.js"></script>
+        <script type="text/javascript" src="js/controllers.js"></script>
+        <script type="text/javascript" src="js/painters.js"></script>
+        <script type="text/javascript" src="js/joints.js"></script>
+		<script type="text/javascript" src="js/objects.js"></script>
+		<script type="text/javascript" src="js/events.js"></script>
+		<script type="text/javascript" src="js/main.js"></script>
+        <script type="text/javascript" src="js/saveJSON.js"></script>
+        <script type="text/javascript" src="js/openJSON.js"></script>
+	</head>
+	
+	<body onload="init();">
+
+        <!-- форма для отрисовки -->
+        <canvas id="canvas" width="950" height="600"></canvas>
+
+		<!-- форма для выбора объектов -->
+		<div id="select_list">
+			<div class="select_list_panel">
+				<span>Гравитация</span>
+				<input id="world_gravity" class="input" type="number" value="10" min="1" max="50" step="1" onChange="updateGravitation();"> м/с<sup>2</sup>
+            </div>
+
+            <div class="select_list_panel">
+                <span style="margin-left:20px;">Свойства жидкости</span>
+                <hr class="line">
+                <span title='в диапазоне от 0,1 до 15'>Плотность</span>
+                <input id="water_density" class="input" type="number" value="1" min="0.1" max="15" step="0.1" onChange="updateWaterProperties();"> г/см<sup>3</sup>
+                <hr class="line">
+                <span title='в диапазоне от 0 до 10'>Вязкость</span>
+                <input id="water_drag" class="input" style="margin-left:40px;margin-right:7px;" type="number" value="1" min="0" max="10" step="0.2"
+                onChange="updateWaterProperties();"> (коэф.)
+            </div>
+
+            <div id="sliding_toggles_block">
+                <div>
+                    <div id="create_object_button" class="toggle_button">Создать объект</div><br>
+                    <div id="create_object_panel" class="select_list_panel toggle_panel" style="display: none">
+                    <span>Тип объекта</span>
+                    <select id="add_object_select" onChange="resetSelectedObject()">
+                        <option value="object_ball">Снаряд</option>
+                        <option value="object_box">Ящик</option>
+                        <option value="object_poly">Многоугольник</option>
+                    </select>
+
+                    <hr class="line">
+                    <span>Цвет объекта</span>
+                    <input type="color" id="object_color">
+
+                    <hr class="line">
+                    <span title='в диапазоне от 0,1 до 15'>Плотность</span>
+                    <input id="object_density" class="input" type="number" value="0.5" min="0.1" max="15" step="0.1"> г/см<sup>3</sup>
+
+                    <hr class="line">
+                    <span>Трение</span>
+                    <input id="object_friction" class="input" type="number" value="0.5" min="0.1" max="1" step="0.1">
+
+                    <hr class="line">
+                    <span title='в диапазоне от 0 до 1'>Упругость</span>
+                    <input id="object_restitution" class="input" type="number" value="0.3" min="0" max="1" step="0.1"> (коэф.)
+
+                    <hr class="line">
+                    <span>Тип тела</span>
+                    <select id="object_body_type">
+                        <option value="static_body" >Статическое</option>
+                        <option value="dynamic_body"selected >Динамическое</option>
+                        <option value="kinematic_body">Кинематическое</option>
+                    </select>
+
+                    <hr class="line">
+                    <span>Твердое тело</span>
+                    <input id="object_is_sensor" class="input" type="checkbox" checked>
+                </div>
+                </div>
+
+                <div>
+                    <div id="create_joint_button" class="toggle_button">Создать соединение</div><br>
+                    <div  id="create_joint_panel" class="select_list_panel toggle_panel" style="display: none">
+                        <span>Тип соединения</span>
+                        <select id="joint_select">
+                            <option value="distance_joint">Distance</option>
+                            <option value="revolute_joint">Revolute</option>
+                            <option value="prismatic_joint">Prismatic</option>
+                            <option value="gear_joint">Gear</option>
+                            <option value="pulley_joint">Pulley</option>
+                        </select>
+
+                    </div>
+                </div>
+            </div>
+
+
+
+            <div class="select_list_panel">
+                <span style="margin-left:1px;">Свойства созданного объекта</span>
+
+                <hr class="line">
+                <span>Форма</span>
+                <input id="properties_object_shape" type="text" style="max-width:130px;">
+
+                <hr class="line">
+                <span>Тип</span>
+
+                <select id="properties_object_type" onChange="updateObjectProperties();">
+                    <option value="properties_empty_body" selected></option>
+                    <option value="properties_static_body">Статическое</option>
+                    <option value="properties_dynamic_body">Динамическое</option>
+                    <option value="properties_kinematic_body">Кинематическое</option>
+                </select>
+
+
+                <hr class="line">
+                <span title='в диапазоне от -180 до 180 градусов'>Угол поворота</span>
+                <input id="properties_object_gradus" class="input" type="number" value="0" min="-180" max="180" step="5" onChange="rotateCurrentObject();"> град
+
+                <div id="ball_properties">
+                    <hr class="line">
+                    <span>Радиус</span>
+                    <input id="properties_object_radius" class="input" type="number" min="0.1" max="40" step="0.1"
+                           onChange="updateObjectProperties();" style="width:100px;"> м
+                </div>
+
+                <div id="box_properties">
+                    <hr class="line">
+                    <span>Ширина</span>
+                    <input id="properties_object_width" class="input" type="number" min="0.1" max="40" step="0.1"
+                           onChange="updateObjectProperties();" style="width:100px;"> м
+
+                    <hr class="line">
+                    <span>Высота</span>
+                    <input id="properties_object_height" class="input" type="number" min="0.1" max="40" step="0.1"
+                           onChange="updateObjectProperties();" style="width:100px;"> м
+                </div>
+                <hr class="line">
+                <span title='в диапазоне от 0,1 до 15'>Плотность</span>
+                <input id="properties_object_density" class="input" type="number" min="0.1" max="15" step="0.1"
+                       onChange="updateObjectProperties();"> г/см<sup>3</sup>
+
+                <hr class="line">
+                <span>Трение</span>
+                <input id="properties_object_friction" class="input" type="number" min="0.1" max="1" step="0.1"
+                       onChange="updateObjectProperties();">
+
+                <hr class="line">
+                <span title='в диапазоне от 0 до 1'>Упругость</span>
+                <input id="properties_object_restitution" class="input" type="number" min="0" max="1" step="0.1"
+                       onChange="updateObjectProperties();"> (коэф.)
+
+            </div>
+
+            <div id="pause_simulation_button" class="toggle_button">Пауза</div>
+            <div id="save_button" class="toggle_button" onclick="saveJSON();">Сохранить</div>
+            <div id="open_button" class="toggle_button" onclick="openJSON();">Открыть</div>
+		</div>
+	</body>   
+</html>
